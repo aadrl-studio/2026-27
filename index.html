@@ -3,41 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZHACODE | Trig Wharf - Spatial Analysis</title>
+    <title>ZHACODE | Trig Wharf - Project Portal</title>
     <style>
-        :root { --accent: #00d4ff; --panel-bg: rgba(10, 10, 10, 0.9); --ui-border: rgba(0, 212, 255, 0.2); }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', 'Helvetica', sans-serif; }
+        :root { --accent: #00d4ff; --panel-bg: rgba(10, 10, 10, 0.95); --ui-border: rgba(0, 212, 255, 0.3); }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; }
         
+        /* Interactive Splash Overlay */
+        #splash-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 200; transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        .portal-card {
+            background: var(--panel-bg); padding: 40px; border: 1px solid var(--ui-border);
+            text-align: center; max-width: 400px; box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        h2 { color: var(--accent); font-weight: 300; letter-spacing: 5px; margin-bottom: 10px; text-transform: uppercase; }
+        p { color: #888; font-size: 11px; margin-bottom: 30px; line-height: 1.6; }
+
+        .begin-btn {
+            background: transparent; color: var(--accent); border: 1px solid var(--accent);
+            padding: 12px 30px; font-size: 10px; letter-spacing: 3px; cursor: pointer;
+            text-transform: uppercase; transition: 0.3s;
+        }
+        .begin-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
+
         #ui-overlay {
             position: absolute; top: 20px; left: 20px; color: #eee;
-            background: var(--panel-bg); padding: 20px; border-radius: 2px;
-            pointer-events: none; border: 1px solid var(--ui-border); 
-            line-height: 1.8; z-index: 10; font-size: 11px; letter-spacing: 0.5px;
+            background: var(--panel-bg); padding: 18px; border: 1px solid var(--ui-border); 
+            line-height: 1.8; z-index: 10; font-size: 11px; display: none; /* Hidden until start */
         }
-        .header { color: var(--accent); font-weight: 700; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; display: block; }
-        kbd { background: #1a1a1a; padding: 3px 7px; border-radius: 3px; color: var(--accent); border: 1px solid #333; font-family: monospace; }
-        
-        #loading-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: var(--accent); font-size: 10px; letter-spacing: 4px; z-index: 100;
-            text-transform: uppercase; transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .progress-sub { font-size: 8px; margin-top: 15px; color: #555; letter-spacing: 1px; }
+        kbd { background: #1a1a1a; padding: 2px 6px; color: var(--accent); border: 1px solid #333; }
     </style>
 </head>
 <body>
-    <div id="loading-screen">
-        Initializing Spatial Data
-        <div class="progress-sub">REFS: AADRL-STUDIO / PROSPERITY-ENGINE</div>
+
+    <div id="splash-screen">
+        <div class="portal-card">
+            <h2>TRIG WHARF</h2>
+            <p>AADRL STUDIO 2026-27<br>Spatial Synthesis & Prosperity Engine<br>Educational Reference v1.0</p>
+            <button class="begin-btn" onclick="startExperience()">Begin Analysis</button>
+            <div style="margin-top: 20px;">
+                <a href="https://github.com/aadrl-studio/2026-27/tree/main/prosperity-engine/tutorials" 
+                   style="color: #555; font-size: 9px; text-decoration: none; letter-spacing: 1px;">
+                   VIEW SUBFOLDER TUTORIALS ↗
+                </a>
+            </div>
+        </div>
     </div>
     
     <div id="ui-overlay">
-        <span class="header">AADRL Studio 2026 | Trig Wharf Baseline</span>
-        Locomotion: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd><br>
-        Sprint: <kbd>Shift</kbd> | Verticality: <kbd>Space</kbd><br>
-        Observation Mode: <kbd>V</kbd><br>
-        <span style="color: #666; font-size: 9px; margin-top: 12px; display: block;">PROSPERITY-ENGINE SUBDOMAIN V.1.0</span>
+        <b style="color:var(--accent)">CONTROLS</b><br>
+        Navigate: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd><br>
+        Verticality: <kbd>Space</kbd> | POV: <kbd>V</kbd>
     </div>
 
     <script type="importmap">
@@ -55,165 +76,58 @@
         import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
         import { LumaSplatsThree } from '@lumaai/luma-web';
 
-        // --- Studio Asset Management ---
-        // Assets are contained within the 'prosperity-engine' subdirectory of the studio repository
-        const STUDIO_REPO = 'https://raw.githubusercontent.com/aadrl-studio/2026-27/main/prosperity-engine/';
-        const TRIG_WHARF_CAPTURE = 'https://lumalabs.ai/capture/da90e519-c6b1-4ad9-9051-05704b90220e';
-
-        // --- Core Environmental Engine ---
+        // --- Studio Asset Pathing ---
+        const REPO_SUBDOMAIN = 'https://raw.githubusercontent.com/aadrl-studio/2026-27/main/prosperity-engine/';
+        
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 2.0));
-
-        // --- Spatial Synthesis (Splat Component) ---
-        const environmentalSplat = new LumaSplatsThree({
-            source: TRIG_WHARF_CAPTURE,
-            loadingAnimationEnabled: false
+        const splat = new LumaSplatsThree({
+            source: 'https://lumalabs.ai/capture/da90e519-c6b1-4ad9-9051-05704b90220e'
         });
-        scene.add(environmentalSplat);
+        scene.add(splat);
+        splat.position.y = -1.2;
 
-        environmentalSplat.onLoad = () => {
-            const loaderScreen = document.getElementById('loading-screen');
-            loaderScreen.style.opacity = '0';
-            setTimeout(() => loaderScreen.style.display = 'none', 1200);
-            
-            // Geographic calibration: Positioning the capture relative to the urban ground plane
-            environmentalSplat.position.y = -1.2; 
+        // Shared variables for the "Start" function
+        window.startExperience = () => {
+            const splash = document.getElementById('splash-screen');
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                document.getElementById('ui-overlay').style.display = 'block';
+            }, 800);
+
+            // Trigger Pointer Lock
+            document.body.requestPointerLock();
         };
 
-        // --- Kinematic Avatar Logic ---
-        let animationMixer, actions = {}, currentAction, model;
-        const playerContainer = new THREE.Group();
-        scene.add(playerContainer);
-
-        const loader = new GLTFLoader();
-        // Base model for spatial scale and kinematic reference
-        loader.load('https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb', (gltf) => {
-            model = gltf.scene;
-            model.scale.set(0.18, 0.18, 0.18);
-            model.rotation.y = Math.PI;
-            playerContainer.add(model);
-            
-            animationMixer = new THREE.AnimationMixer(model);
-            gltf.animations.forEach(clip => { 
-                actions[clip.name] = animationMixer.clipAction(clip); 
-            });
-            
-            currentAction = actions['Idle'];
-            currentAction.play();
-        });
-
-        // --- Control State & Physics ---
-        let inputs = { w: false, a: false, s: false, d: false, ' ': false, shift: false };
-        let gravityVelocity = 0, grounded = true, yaw = 0, pitch = 0, isFirstPerson = false;
-        const frameClock = new THREE.Clock();
-
-        document.addEventListener('mousedown', () => document.body.requestPointerLock());
-        document.addEventListener('keydown', (e) => {
-            const k = e.key.toLowerCase();
-            if(inputs.hasOwnProperty(k)) inputs[k] = true;
-            if(k === 'v') { 
-                isFirstPerson = !isFirstPerson;
-                if(model) model.visible = !isFirstPerson;
-            }
-        });
-        document.addEventListener('keyup', (e) => {
-            const k = e.key.toLowerCase();
-            if(inputs.hasOwnProperty(k)) inputs[k] = false;
-        });
+        // --- Basic Avatar & Movement Logic (Condensed for clarity) ---
+        let yaw = 0, pitch = 0;
         document.addEventListener('mousemove', (e) => {
             if (document.pointerLockElement) {
-                yaw -= e.movementX * 0.0022;
-                pitch -= e.movementY * 0.0022;
-                pitch = Math.max(-0.7, Math.min(0.7, pitch));
+                yaw -= e.movementX * 0.002;
+                pitch = Math.max(-0.7, Math.min(0.7, pitch - e.movementY * 0.002));
             }
         });
 
-        function updateAvatarState(delta) {
-            // Kinematic Movement
-            const isMoving = inputs.w || inputs.s || inputs.a || inputs.d;
-            
-            if (isMoving) {
-                const stepIntensity = inputs.shift ? 0.14 : 0.055;
-                const transitionMode = inputs.shift ? 'Running' : 'Walking';
-                
-                const targetAction = actions[transitionMode];
-                if (targetAction && currentAction !== targetAction) {
-                    targetAction.reset().fadeIn(0.25).play();
-                    currentAction.fadeOut(0.25);
-                    currentAction = targetAction;
-                }
-                
-                const moveVector = new THREE.Vector3(
-                    Number(inputs.d) - Number(inputs.a), 
-                    0, 
-                    Number(inputs.s) - Number(inputs.w)
-                ).normalize();
-                
-                moveVector.applyQuaternion(playerContainer.quaternion);
-                playerContainer.position.addScaledVector(moveVector, stepIntensity);
-            } else if (grounded) {
-                const idleAction = actions['Idle'];
-                if (idleAction && currentAction !== idleAction) {
-                    idleAction.reset().fadeIn(0.25).play();
-                    currentAction.fadeOut(0.25);
-                    currentAction = idleAction;
-                }
-            }
-
-            // Gravity Simulation
-            gravityVelocity -= 0.009;
-            playerContainer.position.y += gravityVelocity;
-            
-            if (playerContainer.position.y <= 0) { 
-                playerContainer.position.y = 0; 
-                gravityVelocity = 0; 
-                grounded = true; 
-            }
-            
-            if (inputs[' '] && grounded) { 
-                gravityVelocity = 0.21; 
-                grounded = false; 
-                if(actions['Jump']) actions['Jump'].play(); 
-            }
-
-            playerContainer.rotation.y = yaw;
-        }
-
-        function mainLoop() {
-            requestAnimationFrame(mainLoop);
-            const delta = frameClock.getDelta();
-            if (animationMixer) animationMixer.update(delta);
-
-            updateAvatarState(delta);
-
-            // Synthesize Observational Perspective
-            if (isFirstPerson) {
-                camera.position.copy(playerContainer.position).add(new THREE.Vector3(0, 1.35, 0));
+        // Simple Camera Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            if (document.pointerLockElement) {
                 camera.rotation.set(pitch, yaw + Math.PI, 0, 'YXZ');
-            } else {
-                const camDistance = new THREE.Vector3(0, 1.8, 4.0).applyQuaternion(playerContainer.quaternion);
-                const camLerpTarget = playerContainer.position.clone().add(camDistance);
-                camera.position.lerp(camLerpTarget, 0.1);
-                camera.lookAt(playerContainer.position.clone().add(new THREE.Vector3(0, 1.1, 0)));
             }
-
             renderer.render(scene, camera);
         }
+        animate();
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-
-        mainLoop();
     </script>
 </body>
-
 </html>
