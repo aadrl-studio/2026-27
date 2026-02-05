@@ -3,282 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZHACODE | Urban Morphology Reference - Trig Wharf</title>
-    <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
-    <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <title>ZHACODE | Trig Wharf - Spatial Analysis</title>
     <style>
-        :root { --panel-bg: #111111; --accent: #0088ff; --text: #dcdcdc; --ui-border: #333; }
-        body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; background: #000; color: var(--text); overflow: hidden; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        :root { --accent: #00d4ff; --panel-bg: rgba(10, 10, 10, 0.9); --ui-border: rgba(0, 212, 255, 0.2); }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', 'Helvetica', sans-serif; }
         
-        #shelf {
-            position: absolute; left: 0; top: 0; width: 340px; height: 100%;
-            background: var(--panel-bg); transform: translateX(-100%); 
-            transition: transform 0.4s ease; z-index: 100; padding: 25px; 
-            box-sizing: border-box; border-right: 1px solid var(--ui-border); display: flex; flex-direction: column;
+        #ui-overlay {
+            position: absolute; top: 20px; left: 20px; color: #eee;
+            background: var(--panel-bg); padding: 20px; border-radius: 2px;
+            pointer-events: none; border: 1px solid var(--ui-border); 
+            line-height: 1.8; z-index: 10; font-size: 11px; letter-spacing: 0.5px;
         }
-        #shelf.open { transform: translateX(0); }
-        #shelf-toggle {
-            position: absolute; left: 100%; top: 20px; background: var(--panel-bg);
-            color: var(--accent); border: 1px solid var(--ui-border); border-left: none;
-            padding: 10px 14px; cursor: pointer; border-radius: 0 2px 2px 0; font-size: 10px; font-weight: 600; letter-spacing: 2px;
-        }
-
-        .controls { position: absolute; top: 15px; right: 15px; z-index: 50; display: flex; flex-direction: column; gap: 10px; width: 260px; }
-        .ctrl-section { background: rgba(10,10,10,0.9); padding: 15px; border: 1px solid var(--ui-border); }
-        .section-label { font-size: 9px; color: #666; margin-bottom: 12px; text-transform: uppercase; font-weight: 800; }
+        .header { color: var(--accent); font-weight: 700; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; display: block; }
+        kbd { background: #1a1a1a; padding: 3px 7px; border-radius: 3px; color: var(--accent); border: 1px solid #333; font-family: monospace; }
         
-        button { 
-            background: #1a1a1a; color: #fff; border: 1px solid #444; 
-            padding: 10px; cursor: pointer; font-size: 10px;
-            text-transform: uppercase; text-align: left; width: 100%; margin-bottom: 6px;
+        #loading-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: var(--accent); font-size: 10px; letter-spacing: 4px; z-index: 100;
+            text-transform: uppercase; transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        button.active { background: var(--accent) !important; border-color: var(--accent); color: #fff; font-weight: 600; }
-        button.export-btn { border-color: #00ffcc; color: #00ffcc; }
-        button.danger { border-color: #ff5555; color: #ff5555; }
-        
-        .stat-group { margin-bottom: 15px; background: #080808; padding: 12px; border: 1px solid #222; }
-        .stat-line { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 5px; letter-spacing: 0.5px; }
-        .bar-container { background: #1a1a1a; height: 3px; margin-bottom: 10px; }
-        .bar-fill { height: 100%; transition: width 0.5s ease; }
+        .progress-sub { font-size: 8px; margin-top: 15px; color: #555; letter-spacing: 1px; }
     </style>
 </head>
 <body>
-
-<div id="shelf">
-    <button id="shelf-toggle" onclick="document.getElementById('shelf').classList.toggle('open')">SPATIAL DATA</button>
-    <h3 style="color:var(--accent); margin:0 0 5px 0; font-weight: 500; letter-spacing: -0.5px;">TRIG WHARF SYNTHESIS</h3>
-    <p style="font-size: 9px; color: #555; margin-bottom: 25px;">STUDIO EDUCATIONAL LITE VERSION | LONDON REF</p>
+    <div id="loading-screen">
+        Initializing Spatial Data
+        <div class="progress-sub">REFS: AADRL-STUDIO / PROSPERITY-ENGINE</div>
+    </div>
     
-    <div class="stat-group">
-        <div class="stat-line"><span>STUDY AREA (GFA)</span> <span id="val-area">0 m²</span></div>
-        <div class="stat-line"><span>VIABILITY COEFFICIENT</span> <span id="val-score">0</span></div>
-        <div class="stat-line"><span>TEMPORAL ITERATIONS</span> <span id="val-steps">0</span></div>
+    <div id="ui-overlay">
+        <span class="header">AADRL Studio 2026 | Trig Wharf Baseline</span>
+        Locomotion: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd><br>
+        Sprint: <kbd>Shift</kbd> | Verticality: <kbd>Space</kbd><br>
+        Observation Mode: <kbd>V</kbd><br>
+        <span style="color: #666; font-size: 9px; margin-top: 12px; display: block;">PROSPERITY-ENGINE SUBDOMAIN V.1.0</span>
     </div>
 
-    <div id="analytics"></div>
-</div>
-
-<div class="controls">
-    <div class="ctrl-section">
-        <div class="section-label">Site Delineation</div>
-        <button id="btn-draw" onclick="setMode('draw')">Plot Site Boundary</button>
-        <button id="btn-complete-draw" onclick="completeDraw()" style="display:none; background:#000; border-color:var(--accent)">Finalize Study Plot</button>
-    </div>
-
-    <div id="input-tools" style="display:none">
-        <div class="ctrl-section">
-            <div class="section-label">Baseline Infrastructure</div>
-            <button id="btn-batch-road" onclick="setMode('batch-road')">Map Circulation Path</button>
-            <button id="btn-batch-park" onclick="setMode('batch-park')">Designate Open Space</button>
-            <button id="btn-place-transit" onclick="setMode('place-transit')">Anchor Multimodal Node</button>
-            <button id="btn-apply-batch" onclick="applyBatch()" style="display:none; background:#111; border-color:#0f0;">Project Geometry</button>
-        </div>
-
-        <div class="ctrl-section">
-            <div class="section-label">Simulation Controls</div>
-            <button id="btn-sim" onclick="toggleSim()" style="color: #00ffaa; border-color: #00ffaa;">Run Generative Sequence</button>
-            <button class="export-btn" onclick="exportEngineData()">Extract Analytical JSON</button>
-            <button class="danger" onclick="resetSim()">Reset Morphology</button>
-        </div>
-    </div>
-</div>
-
-<div id="map"></div>
-
-<script>
-    const MT_KEY = 'BZ0iqCh8UMcRJbPK3FDd'; 
-    const SITE_LOC = [-0.0982, 51.5113]; // Trig Wharf Baseline
-
-    let currentMode = 'none', drawPoints = [], isRunning = false, gridData = { type: 'FeatureCollection', features: [] };
-    let boundaryFeature = null;
-    let stats = { steps: 0, current: 0, area: 0 };
-    
-    const COLORS = { 
-        office: '#e63946', 
-        transit: '#f4a261', 
-        residential: '#e9c46a', 
-        retail: '#2a9d8f', 
-        park: '#8ab17d', 
-        road_in: '#444', 
-        empty: 'rgba(255,255,255,0.03)' 
-    };
-
-    const map = new maplibregl.Map({ 
-        container: 'map', 
-        style: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${MT_KEY}`, 
-        center: SITE_LOC, 
-        zoom: 17, 
-        pitch: 40 
-    });
-
-    map.on('load', () => {
-        map.addSource('draw-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        map.addLayer({ id: 'draw-fill', type: 'fill', source: 'draw-src', paint: { 'fill-color': 'rgba(0,136,255,0.1)' } });
-        map.addLayer({ id: 'draw-line', type: 'line', source: 'draw-src', paint: { 'line-color': '#0088ff', 'line-width': 1 } });
-        
-        map.addSource('grid-src', { type: 'geojson', data: gridData });
-        map.addLayer({ 
-            id: 'grid-layer', 
-            type: 'circle', 
-            source: 'grid-src', 
-            paint: { 
-                'circle-radius': ['case', ['get', 'isInput'], 3.5, 6.5], 
-                'circle-color': ['get', 'color'], 
-                'circle-stroke-width': ['case', ['get', 'isInput'], 1, 0], 
-                'circle-stroke-color': '#fff'
-            } 
-        });
-    });
-
-    function setMode(m) {
-        currentMode = m; drawPoints = [];
-        document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
-        document.getElementById(`btn-${m}`)?.classList.add('active');
-        document.getElementById('btn-complete-draw').style.display = (m === 'draw') ? 'block' : 'none';
-        document.getElementById('btn-apply-batch').style.display = (m.includes('batch')) ? 'block' : 'none';
-    }
-
-    map.on('click', (e) => {
-        if (['draw', 'batch-road', 'batch-park'].includes(currentMode)) {
-            drawPoints.push([e.lngLat.lng, e.lngLat.lat]);
-            updatePreview();
-        } else if (currentMode === 'place-transit') {
-            const f = map.queryRenderedFeatures(e.point, { layers: ['grid-layer'] })[0];
-            if (f) updateCell(f.properties.id, 'transit', true);
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.157.0/build/three.module.js",
+                "three/examples/jsm/": "https://unpkg.com/three@0.157.0/examples/jsm/",
+                "@lumaai/luma-web": "https://unpkg.com/@lumaai/luma-web@0.2.0/dist/library/luma-web.module.js"
+            }
         }
-    });
+    </script>
 
-    function updatePreview() {
-        if (drawPoints.length < 2) return;
-        let feat = currentMode === 'batch-road' ? turf.lineString(drawPoints) : turf.polygon([[...drawPoints, drawPoints[0]]]);
-        map.getSource('draw-src').setData({ type: 'FeatureCollection', features: [feat] });
-    }
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+        import { LumaSplatsThree } from '@lumaai/luma-web';
 
-    function completeDraw() {
-        if (drawPoints.length < 3) return;
-        boundaryFeature = turf.polygon([[...drawPoints, drawPoints[0]]]);
-        stats.area = Math.round(turf.area(boundaryFeature));
-        document.getElementById('val-area').innerText = stats.area.toLocaleString() + " m²";
-        
-        const grid = turf.squareGrid(turf.bbox(boundaryFeature), 0.012, { units: 'kilometers', mask: boundaryFeature });
-        gridData.features = grid.features.map((f, i) => {
-            const c = turf.center(f);
-            return { type: 'Feature', id: i, geometry: c.geometry, properties: { id: i, type: 'empty', color: COLORS.empty, score: 0, adj: [], isInput: false } };
+        // --- Studio Asset Management ---
+        // Assets are contained within the 'prosperity-engine' subdirectory of the studio repository
+        const STUDIO_REPO = 'https://raw.githubusercontent.com/aadrl-studio/2026-27/main/prosperity-engine/';
+        const TRIG_WHARF_CAPTURE = 'https://lumalabs.ai/capture/da90e519-c6b1-4ad9-9051-05704b90220e';
+
+        // --- Core Environmental Engine ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+
+        // --- Spatial Synthesis (Splat Component) ---
+        const environmentalSplat = new LumaSplatsThree({
+            source: TRIG_WHARF_CAPTURE,
+            loadingAnimationEnabled: false
         });
-        
-        gridData.features.forEach((f, i) => {
-            gridData.features.forEach((o, j) => { if (i !== j && turf.distance(f, o) < 0.02) f.properties.adj.push(j); });
-        });
-        
-        map.getSource('grid-src').setData(gridData);
-        document.getElementById('input-tools').style.display = 'block';
-        setMode('none');
-    }
+        scene.add(environmentalSplat);
 
-    function applyBatch() {
-        if (drawPoints.length < 2) return;
-        const shape = (currentMode === 'batch-road') ? turf.lineString(drawPoints) : turf.polygon([[...drawPoints, drawPoints[0]]]);
-        gridData.features.forEach(f => {
-            const isMatch = (currentMode === 'batch-road') ? turf.distance(f, turf.nearestPointOnLine(shape, f)) < 0.015 : turf.booleanPointInPolygon(f, shape);
-            if (isMatch) updateCell(f.properties.id, currentMode === 'batch-road' ? 'road_in' : 'park', true);
-        });
-        setMode('none');
-        map.getSource('draw-src').setData({ type: 'FeatureCollection', features: [] });
-    }
+        environmentalSplat.onLoad = () => {
+            const loaderScreen = document.getElementById('loading-screen');
+            loaderScreen.style.opacity = '0';
+            setTimeout(() => loaderScreen.style.display = 'none', 1200);
+            
+            // Geographic calibration: Positioning the capture relative to the urban ground plane
+            environmentalSplat.position.y = -1.2; 
+        };
 
-    function updateCell(id, type, isInput) {
-        const c = gridData.features.find(f => f.properties.id === id);
-        if (c) { c.properties.type = type; c.properties.color = COLORS[type]; c.properties.isInput = isInput; }
-        map.getSource('grid-src').setData(gridData);
-        updateUI();
-    }
+        // --- Kinematic Avatar Logic ---
+        let animationMixer, actions = {}, currentAction, model;
+        const playerContainer = new THREE.Group();
+        scene.add(playerContainer);
 
-    function toggleSim() {
-        isRunning = !isRunning;
-        document.getElementById('btn-sim').innerText = isRunning ? "Suspend Sequence" : "Run Generative Sequence";
-        if (isRunning) simLoop();
-    }
-
-    function simLoop() {
-        if (!isRunning) return;
-        
-        // Static internal weights for educational reference
-        const wRP = 5; 
-        const wOT = 8; 
-        const wRPR = 4; 
-
-        gridData.features.forEach(cell => {
-            if (cell.properties.isInput) return;
-            const neighbors = cell.properties.adj.map(idx => gridData.features[idx]);
-            const type = cell.properties.type;
-            let s = 0;
-
-            neighbors.forEach(n => {
-                const nt = n.properties.type;
-                if (type === 'residential') { if(nt === 'park') s += wRP; if(nt === 'retail') s += 1; }
-                if (type === 'office' && nt === 'transit') s += wOT;
-                if (type === 'retail' && (nt === 'road_in' || nt === 'transit')) s += wRPR;
-                if (type === nt && type !== 'empty') s += 1; 
+        const loader = new GLTFLoader();
+        // Base model for spatial scale and kinematic reference
+        loader.load('https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb', (gltf) => {
+            model = gltf.scene;
+            model.scale.set(0.18, 0.18, 0.18);
+            model.rotation.y = Math.PI;
+            playerContainer.add(model);
+            
+            animationMixer = new THREE.AnimationMixer(model);
+            gltf.animations.forEach(clip => { 
+                actions[clip.name] = animationMixer.clipAction(clip); 
             });
-            cell.properties.score = s;
+            
+            currentAction = actions['Idle'];
+            currentAction.play();
+        });
 
-            const rand = Math.random();
-            if (type === 'empty' && rand > 0.985) {
-                const pool = ['office', 'residential', 'retail'];
-                const t = pool[Math.floor(Math.random()*3)];
-                cell.properties.type = t;
-                cell.properties.color = COLORS[t];
-            } else if (type !== 'empty' && rand > 0.99 && neighbors.length > 0) {
-                const target = neighbors[Math.floor(Math.random()*neighbors.length)];
-                if (target.properties.type !== 'empty' && target.properties.type !== type) {
-                    cell.properties.type = target.properties.type;
-                    cell.properties.color = COLORS[target.properties.type];
-                }
+        // --- Control State & Physics ---
+        let inputs = { w: false, a: false, s: false, d: false, ' ': false, shift: false };
+        let gravityVelocity = 0, grounded = true, yaw = 0, pitch = 0, isFirstPerson = false;
+        const frameClock = new THREE.Clock();
+
+        document.addEventListener('mousedown', () => document.body.requestPointerLock());
+        document.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if(inputs.hasOwnProperty(k)) inputs[k] = true;
+            if(k === 'v') { 
+                isFirstPerson = !isFirstPerson;
+                if(model) model.visible = !isFirstPerson;
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if(inputs.hasOwnProperty(k)) inputs[k] = false;
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement) {
+                yaw -= e.movementX * 0.0022;
+                pitch -= e.movementY * 0.0022;
+                pitch = Math.max(-0.7, Math.min(0.7, pitch));
             }
         });
 
-        stats.steps++; 
-        stats.current = gridData.features.reduce((a, b) => a + b.properties.score, 0);
-        updateUI(); 
-        map.getSource('grid-src').setData(gridData); 
-        requestAnimationFrame(simLoop);
-    }
+        function updateAvatarState(delta) {
+            // Kinematic Movement
+            const isMoving = inputs.w || inputs.s || inputs.a || inputs.d;
+            
+            if (isMoving) {
+                const stepIntensity = inputs.shift ? 0.14 : 0.055;
+                const transitionMode = inputs.shift ? 'Running' : 'Walking';
+                
+                const targetAction = actions[transitionMode];
+                if (targetAction && currentAction !== targetAction) {
+                    targetAction.reset().fadeIn(0.25).play();
+                    currentAction.fadeOut(0.25);
+                    currentAction = targetAction;
+                }
+                
+                const moveVector = new THREE.Vector3(
+                    Number(inputs.d) - Number(inputs.a), 
+                    0, 
+                    Number(inputs.s) - Number(inputs.w)
+                ).normalize();
+                
+                moveVector.applyQuaternion(playerContainer.quaternion);
+                playerContainer.position.addScaledVector(moveVector, stepIntensity);
+            } else if (grounded) {
+                const idleAction = actions['Idle'];
+                if (idleAction && currentAction !== idleAction) {
+                    idleAction.reset().fadeIn(0.25).play();
+                    currentAction.fadeOut(0.25);
+                    currentAction = idleAction;
+                }
+            }
 
-    function resetSim() {
-        isRunning = false; 
-        gridData.features.forEach(f => { if(!f.properties.isInput) { f.properties.type = 'empty'; f.properties.color = COLORS.empty; f.properties.score = 0; } });
-        stats.steps = 0; map.getSource('grid-src').setData(gridData); updateUI();
-        document.getElementById('btn-sim').innerText = "Run Generative Sequence";
-    }
+            // Gravity Simulation
+            gravityVelocity -= 0.009;
+            playerContainer.position.y += gravityVelocity;
+            
+            if (playerContainer.position.y <= 0) { 
+                playerContainer.position.y = 0; 
+                gravityVelocity = 0; 
+                grounded = true; 
+            }
+            
+            if (inputs[' '] && grounded) { 
+                gravityVelocity = 0.21; 
+                grounded = false; 
+                if(actions['Jump']) actions['Jump'].play(); 
+            }
 
-    function updateUI() {
-        document.getElementById('val-score').innerText = Math.round(stats.current);
-        document.getElementById('val-steps').innerText = stats.steps;
-        const counts = {}; gridData.features.forEach(f => counts[f.properties.type] = (counts[f.properties.type] || 0) + 1);
-        let html = '';
-        ['office', 'transit', 'residential', 'retail', 'park', 'road_in'].forEach(t => {
-            const p = ((counts[t] || 0) / (gridData.features.length || 1) * 100).toFixed(1);
-            html += `<div class="stat-line"><span>${t.toUpperCase()}</span><span>${p}%</span></div><div class="bar-container"><div class="bar-fill" style="width:${p}%; background:${COLORS[t]}"></div></div>`;
+            playerContainer.rotation.y = yaw;
+        }
+
+        function mainLoop() {
+            requestAnimationFrame(mainLoop);
+            const delta = frameClock.getDelta();
+            if (animationMixer) animationMixer.update(delta);
+
+            updateAvatarState(delta);
+
+            // Synthesize Observational Perspective
+            if (isFirstPerson) {
+                camera.position.copy(playerContainer.position).add(new THREE.Vector3(0, 1.35, 0));
+                camera.rotation.set(pitch, yaw + Math.PI, 0, 'YXZ');
+            } else {
+                const camDistance = new THREE.Vector3(0, 1.8, 4.0).applyQuaternion(playerContainer.quaternion);
+                const camLerpTarget = playerContainer.position.clone().add(camDistance);
+                camera.position.lerp(camLerpTarget, 0.1);
+                camera.lookAt(playerContainer.position.clone().add(new THREE.Vector3(0, 1.1, 0)));
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
-        document.getElementById('analytics').innerHTML = html;
-    }
 
-    function exportEngineData() {
-        if (!gridData.features.length) return alert("Define study perimeter first.");
-        const exportObj = {
-            metadata: { site: "Trig Wharf, London", gfa: stats.area, iterations: stats.steps, creator: "ZHACODE-EDU" },
-            cells: gridData.features.map(f => ({ id: f.properties.id, typ: f.properties.type, val: f.properties.score }))
-        };
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "zhacode_morphology_export.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    }
-</script>
+        mainLoop();
+    </script>
 </body>
 </html>
