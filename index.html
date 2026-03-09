@@ -1,275 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZHACODE | Prosperity Engine - Trig Wharf Index</title>
-    <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
-    <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-    <style>
-        :root { --panel-bg: #0a0a0a; --accent: #0088ff; --text: #dcdcdc; --ui-border: #222; }
-        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: #000; color: var(--text); overflow: hidden; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; filter: saturate(0.5) brightness(0.8); }
-        
-        /* Directory Portal Overlay */
-        #splash-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #111 0%, #000 100%);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 200; transition: opacity 0.8s ease;
-        }
-        .portal-card {
-            background: var(--panel-bg); padding: 50px; border: 1px solid var(--ui-border);
-            text-align: center; max-width: 450px; border-top: 4px solid var(--accent);
-        }
-        h1 { color: #fff; font-weight: 200; letter-spacing: 8px; margin-bottom: 5px; text-transform: uppercase; font-size: 24px; }
-        .sub-dir { color: var(--accent); font-size: 10px; letter-spacing: 2px; margin-bottom: 30px; display: block; }
-        .begin-btn {
-            background: transparent; color: var(--accent); border: 1px solid var(--accent);
-            padding: 14px 40px; font-size: 11px; letter-spacing: 3px; cursor: pointer;
-            text-transform: uppercase; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .begin-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px rgba(0, 136, 255, 0.4); }
+<style>
+    :root { 
+        --panel-bg: rgba(10, 10, 10, 0.95); 
+        --accent: #0088ff; 
+        --accent-alt: #ffaa00;
+        --text: #ffffff; 
+        --ui-border: rgba(255, 255, 255, 0.1); 
+    }
+    
+    body { margin: 0; padding: 0; font-family: 'Inter', 'Space Mono', monospace; background: #000; color: var(--text); overflow: hidden; }
 
-        #shelf {
-            position: absolute; left: 0; top: 0; width: 340px; height: 100%;
-            background: var(--panel-bg); transform: translateX(-100%); 
-            transition: transform 0.4s ease; z-index: 100; padding: 25px; 
-            box-sizing: border-box; border-right: 1px solid var(--ui-border); display: flex; flex-direction: column;
-        }
-        #shelf.open { transform: translateX(0); }
-        #shelf-toggle {
-            position: absolute; left: 100%; top: 20px; background: var(--panel-bg);
-            color: var(--accent); border: 1px solid var(--ui-border); border-left: none;
-            padding: 10px 14px; cursor: pointer; font-size: 10px; font-weight: 600; letter-spacing: 2px;
-        }
+    /* Sophisticated Splash Overlay */
+    #splash-screen {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at 50% 50%, #151515 0%, #000 100%);
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        z-index: 200; transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-        .controls { position: absolute; top: 15px; right: 15px; z-index: 50; display: none; flex-direction: column; gap: 10px; width: 260px; }
-        .ctrl-section { background: rgba(5,5,5,0.95); padding: 15px; border: 1px solid var(--ui-border); }
-        .section-label { font-size: 9px; color: #555; margin-bottom: 12px; text-transform: uppercase; font-weight: 800; }
-        
-        button.action-btn { 
-            background: #111; color: #fff; border: 1px solid #333; 
-            padding: 10px; cursor: pointer; font-size: 10px;
-            text-transform: uppercase; text-align: left; width: 100%; margin-bottom: 6px;
-        }
-        button.active { background: var(--accent) !important; border-color: var(--accent); color: #fff; }
-        
-        .stat-group { margin-bottom: 15px; background: #050505; padding: 12px; border: 1px solid #111; }
-        .stat-line { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 5px; }
-        .bar-container { background: #111; height: 2px; margin-bottom: 10px; }
-        .bar-fill { height: 100%; transition: width 0.5s ease; }
-    </style>
-</head>
-<body>
+    /* Logo & Branding Header */
+    .brand-header { text-align: center; margin-bottom: 60px; }
+    .aadrl-logo { width: 180px; filter: invert(1); opacity: 0.9; margin-bottom: 20px; }
+    .brand-tagline { font-size: 9px; letter-spacing: 5px; color: #555; text-transform: uppercase; font-weight: 300; }
+
+    /* Portal Container */
+    .portal-container { display: flex; gap: 20px; perspective: 1000px; }
+
+    .portal-card {
+        background: var(--panel-bg); 
+        padding: 60px 40px; 
+        border: 1px solid var(--ui-border);
+        text-align: left; /* Designerly asymmetric look */
+        width: 320px; 
+        backdrop-filter: blur(10px);
+        transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+        position: relative;
+    }
+
+    .portal-card:hover {
+        border-color: rgba(255,255,255,0.4);
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    /* Card Details */
+    .vignette-id { font-family: 'Space Mono'; font-size: 10px; color: var(--accent); margin-bottom: 10px; display: block; }
+    h1 { font-weight: 300; letter-spacing: 2px; margin: 0 0 15px 0; font-size: 20px; text-transform: uppercase; }
+    .description { color: #888; font-size: 11px; line-height: 1.6; margin-bottom: 40px; font-weight: 300; }
+    
+    /* Subtle Dev-Hub Meta Text */
+    .meta-footer {
+        position: absolute; bottom: 40px; font-size: 9px; 
+        color: #333; letter-spacing: 1px; text-transform: uppercase;
+        width: 100%; text-align: center;
+    }
+
+    .begin-btn {
+        background: transparent; color: #fff; border: 1px solid #444;
+        padding: 12px 0; font-size: 10px; letter-spacing: 4px; cursor: pointer;
+        text-transform: uppercase; transition: 0.3s; width: 100%;
+    }
+    .begin-btn:hover { background: #fff; color: #000; border-color: #fff; }
+
+    /* Shelf Adjustments for a "Pro" Look */
+    #shelf { border-right: 1px solid #1a1a1a; padding-top: 80px; }
+    #shelf-toggle { background: #000; border: 1px solid #222; border-left: none; font-size: 9px; }
+</style>
 
 <div id="splash-screen">
-    <div class="portal-card">
-        <h1>PROSPERITY ENGINE</h1>
-        <span class="sub-dir">AADRL STUDIO 2026-27 / TRIG WHARF</span>
-        <p style="color: #666; font-size: 10px; line-height: 1.8; margin-bottom: 40px;">
-            Generative Spatial Morphology Toolkit<br>
-            Optimized for Educational Site Analysis
-        </p>
-        <button class="begin-btn" onclick="startSimulation()">Initialize Engine</button>
-    </div>
-</div>
-
-<div id="shelf">
-    <button id="shelf-toggle" onclick="document.getElementById('shelf').classList.toggle('open')">DATA_CORE</button>
-    <h3 style="color:var(--accent); margin:0 0 5px 0; font-weight: 500; letter-spacing: -0.5px;">PROSPERITY SYNTHESIS</h3>
-    <p style="font-size: 9px; color: #555; margin-bottom: 25px;">ROOT: /prosperity-engine/index.html</p>
-    
-    <div class="stat-group">
-        <div class="stat-line"><span>SITE AREA</span> <span id="val-area">0 m²</span></div>
-        <div class="stat-line"><span>SCORE</span> <span id="val-score">0</span></div>
-        <div class="stat-line"><span>STEPS</span> <span id="val-steps">0</span></div>
-    </div>
-    <div id="analytics"></div>
-</div>
-
-<div class="controls" id="main-controls">
-    <div class="ctrl-section">
-        <div class="section-label">Site Perimeter</div>
-        <button id="btn-draw" class="action-btn" onclick="setMode('draw')">Plot Study Plot</button>
-        <button id="btn-complete-draw" class="action-btn" onclick="completeDraw()" style="display:none; background:#000; border-color:var(--accent)">Finalize Study Plot</button>
+    <div class="brand-header">
+        <img src="https://aadrl-studio.github.io/2026-27/aadrl_logo.png" class="aadrl-logo" alt="AADRL">
+        <div class="brand-tagline">Dev Hub / Co-Creation / Urban Planning Futures</div>
     </div>
 
-    <div id="input-tools" style="display:none">
-        <div class="ctrl-section">
-            <div class="section-label">Baseline Infrastructure</div>
-            <button id="btn-batch-road" class="action-btn" onclick="setMode('batch-road')">Map Circulation</button>
-            <button id="btn-batch-park" class="action-btn" onclick="setMode('batch-park')">Designate Open Space</button>
-            <button id="btn-place-transit" class="action-btn" onclick="setMode('place-transit')">Anchor Transit Node</button>
-            <button id="btn-apply-batch" class="action-btn" onclick="applyBatch()" style="display:none; border-color:#0f0;">Project Geometry</button>
+    <div class="portal-container">
+        <div class="portal-card">
+            <span class="vignette-id">INIT_SESSION_01</span>
+            <h1>PROSPERITY<br>ENGINE</h1>
+            <p class="description">
+                Generative spatial morphology toolkit. Computational site analysis 
+                driven by proximity-based growth algorithms.
+            </p>
+            <button class="begin-btn" onclick="startSimulation('v1')">Enter Environment</button>
         </div>
 
-        <div class="ctrl-section">
-            <div class="section-label">Execution</div>
-            <button id="btn-sim" class="action-btn" onclick="toggleSim()" style="color: #00ffaa;">Run Generative Sequence</button>
-            <button class="action-btn" style="border-color:#ff5555" onclick="resetSim()">Reset Morphology</button>
+        <div class="portal-card">
+            <span class="vignette-id" style="color: var(--accent-alt);">INIT_SESSION_02</span>
+            <h1>FIELD<br>MESHER</h1>
+            <p class="description">
+                Advanced topological surface distribution. Real-time massing 
+                prototypes for high-density urban fabrics.
+            </p>
+            <button class="begin-btn" onclick="startSimulation('v2')">Enter Environment</button>
         </div>
     </div>
+
+    <div class="meta-footer">
+        AADRL Studio 2026-27 &copy; // Distributed Research Environment
+    </div>
 </div>
-
-<div id="map"></div>
-
-<script>
-    const MT_KEY = 'BZ0iqCh8UMcRJbPK3FDd'; 
-    const SITE_LOC = [-0.0982, 51.5113]; 
-    const DIR_PATH = 'prosperity-engine/';
-
-    let currentMode = 'none', drawPoints = [], isRunning = false, gridData = { type: 'FeatureCollection', features: [] };
-    let boundaryFeature = null;
-    let stats = { steps: 0, current: 0, area: 0 };
-    
-    const COLORS = { office: '#e63946', transit: '#f4a261', residential: '#e9c46a', retail: '#2a9d8f', park: '#8ab17d', road_in: '#444', empty: 'rgba(255,255,255,0.03)' };
-
-    const map = new maplibregl.Map({ 
-        container: 'map', 
-        style: `https://api.maptiler.com/maps/streets-v2-dark/style.json?key=${MT_KEY}`, 
-        center: SITE_LOC, 
-        zoom: 17, 
-        pitch: 40 
-    });
-
-    window.startSimulation = () => {
-        document.getElementById('splash-screen').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('splash-screen').style.display = 'none';
-            document.getElementById('main-controls').style.display = 'flex';
-        }, 800);
-    };
-
-    map.on('load', () => {
-        map.addSource('draw-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        map.addLayer({ id: 'draw-fill', type: 'fill', source: 'draw-src', paint: { 'fill-color': 'rgba(0,136,255,0.1)' } });
-        map.addLayer({ id: 'draw-line', type: 'line', source: 'draw-src', paint: { 'line-color': '#0088ff', 'line-width': 1 } });
-        map.addSource('grid-src', { type: 'geojson', data: gridData });
-        map.addLayer({ id: 'grid-layer', type: 'circle', source: 'grid-src', paint: { 'circle-radius': ['case', ['get', 'isInput'], 3.5, 6.5], 'circle-color': ['get', 'color'], 'circle-stroke-width': ['case', ['get', 'isInput'], 1, 0], 'circle-stroke-color': '#fff' } });
-    });
-
-    function setMode(m) {
-        currentMode = m; drawPoints = [];
-        document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`btn-${m}`)?.classList.add('active');
-        document.getElementById('btn-complete-draw').style.display = (m === 'draw') ? 'block' : 'none';
-        document.getElementById('btn-apply-batch').style.display = (m.includes('batch')) ? 'block' : 'none';
-    }
-
-    map.on('click', (e) => {
-        if (['draw', 'batch-road', 'batch-park'].includes(currentMode)) {
-            drawPoints.push([e.lngLat.lng, e.lngLat.lat]);
-            updatePreview();
-        } else if (currentMode === 'place-transit') {
-            const f = map.queryRenderedFeatures(e.point, { layers: ['grid-layer'] })[0];
-            if (f) updateCell(f.properties.id, 'transit', true);
-        }
-    });
-
-    function updatePreview() {
-        if (drawPoints.length < 2) return;
-        let feat = currentMode === 'batch-road' ? turf.lineString(drawPoints) : turf.polygon([[...drawPoints, drawPoints[0]]]);
-        map.getSource('draw-src').setData({ type: 'FeatureCollection', features: [feat] });
-    }
-
-    function completeDraw() {
-        if (drawPoints.length < 3) return;
-        boundaryFeature = turf.polygon([[...drawPoints, drawPoints[0]]]);
-        stats.area = Math.round(turf.area(boundaryFeature));
-        document.getElementById('val-area').innerText = stats.area.toLocaleString() + " m²";
-        const grid = turf.squareGrid(turf.bbox(boundaryFeature), 0.012, { units: 'kilometers', mask: boundaryFeature });
-        gridData.features = grid.features.map((f, i) => {
-            const c = turf.center(f);
-            return { type: 'Feature', id: i, geometry: c.geometry, properties: { id: i, type: 'empty', color: COLORS.empty, score: 0, adj: [], isInput: false } };
-        });
-        gridData.features.forEach((f, i) => {
-            gridData.features.forEach((o, j) => { if (i !== j && turf.distance(f, o) < 0.02) f.properties.adj.push(j); });
-        });
-        map.getSource('grid-src').setData(gridData);
-        document.getElementById('input-tools').style.display = 'block';
-        setMode('none');
-    }
-
-    function applyBatch() {
-        if (drawPoints.length < 2) return;
-        const shape = (currentMode === 'batch-road') ? turf.lineString(drawPoints) : turf.polygon([[...drawPoints, drawPoints[0]]]);
-        gridData.features.forEach(f => {
-            const isMatch = (currentMode === 'batch-road') ? turf.distance(f, turf.nearestPointOnLine(shape, f)) < 0.015 : turf.booleanPointInPolygon(f, shape);
-            if (isMatch) updateCell(f.properties.id, currentMode === 'batch-road' ? 'road_in' : 'park', true);
-        });
-        setMode('none');
-        map.getSource('draw-src').setData({ type: 'FeatureCollection', features: [] });
-    }
-
-    function updateCell(id, type, isInput) {
-        const c = gridData.features.find(f => f.properties.id === id);
-        if (c) { c.properties.type = type; c.properties.color = COLORS[type]; c.properties.isInput = isInput; }
-        map.getSource('grid-src').setData(gridData);
-        updateUI();
-    }
-
-    function toggleSim() {
-        isRunning = !isRunning;
-        document.getElementById('btn-sim').innerText = isRunning ? "Suspend Sequence" : "Run Generative Sequence";
-        if (isRunning) simLoop();
-    }
-
-    function simLoop() {
-        if (!isRunning) return;
-        gridData.features.forEach(cell => {
-            if (cell.properties.isInput) return;
-            const neighbors = cell.properties.adj.map(idx => gridData.features[idx]);
-            const type = cell.properties.type;
-            let s = 0;
-            neighbors.forEach(n => {
-                const nt = n.properties.type;
-                if (type === 'residential') { if(nt === 'park') s += 5; if(nt === 'retail') s += 1; }
-                if (type === 'office' && nt === 'transit') s += 8;
-                if (type === 'retail' && (nt === 'road_in' || nt === 'transit')) s += 4;
-                if (type === nt && type !== 'empty') s += 1; 
-            });
-            cell.properties.score = s;
-            const rand = Math.random();
-            if (type === 'empty' && rand > 0.985) {
-                const pool = ['office', 'residential', 'retail'];
-                const t = pool[Math.floor(Math.random()*3)];
-                cell.properties.type = t;
-                cell.properties.color = COLORS[t];
-            } else if (type !== 'empty' && rand > 0.99 && neighbors.length > 0) {
-                const target = neighbors[Math.floor(Math.random()*neighbors.length)];
-                if (target.properties.type !== 'empty' && target.properties.type !== type) {
-                    cell.properties.type = target.properties.type;
-                    cell.properties.color = COLORS[target.properties.type];
-                }
-            }
-        });
-        stats.steps++; 
-        stats.current = gridData.features.reduce((a, b) => a + b.properties.score, 0);
-        updateUI(); 
-        map.getSource('grid-src').setData(gridData); 
-        requestAnimationFrame(simLoop);
-    }
-
-    function resetSim() {
-        isRunning = false; 
-        gridData.features.forEach(f => { if(!f.properties.isInput) { f.properties.type = 'empty'; f.properties.color = COLORS.empty; f.properties.score = 0; } });
-        stats.steps = 0; map.getSource('grid-src').setData(gridData); updateUI();
-        document.getElementById('btn-sim').innerText = "Run Generative Sequence";
-    }
-
-    function updateUI() {
-        document.getElementById('val-score').innerText = Math.round(stats.current);
-        document.getElementById('val-steps').innerText = stats.steps;
-        const counts = {}; gridData.features.forEach(f => counts[f.properties.type] = (counts[f.properties.type] || 0) + 1);
-        let html = '';
-        ['office', 'transit', 'residential', 'retail', 'park', 'road_in'].forEach(t => {
-            const p = ((counts[t] || 0) / (gridData.features.length || 1) * 100).toFixed(1);
-            html += `<div class="stat-line"><span>${t.toUpperCase()}</span><span>${p}%</span></div><div class="bar-container"><div class="bar-fill" style="width:${p}%; background:${COLORS[t]}"></div></div>`;
-        });
-        document.getElementById('analytics').innerHTML = html;
-    }
-</script>
-</body>
-</html>
